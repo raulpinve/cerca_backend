@@ -93,6 +93,9 @@ CREATE TABLE devices (
     last_seen_at TIMESTAMPTZ
 );
 
+CREATE INDEX idx_devices_user_id
+ON devices(user_id);
+
 -- CURRENT LOCATIONS
 CREATE TABLE current_locations (
     device_id UUID PRIMARY KEY
