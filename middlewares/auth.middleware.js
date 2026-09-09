@@ -1,13 +1,13 @@
 import { auth } from "../config/firebase.js";
+import { throwForbiddenError } from "../errors/throwHTTPErrors.js";
 import { getUserByFirebaseUid } from "../repositories/user.repository.js";
-import { respuestaError } from "../utils/response.utils.js";
 
 // export async function authenticateToken(req, res, next) {
 //   try {
 //     const authHeader = req.headers.authorization;
 
 //     if (!authHeader?.startsWith("Bearer ")) {
-//       return respuestaError(res, 401, "Token no proporcionado");
+//       throwForbiddenError("Token no proporcionado");
 //     }
 
 //     const token = authHeader.split("Bearer ")[1];
@@ -17,7 +17,8 @@ import { respuestaError } from "../utils/response.utils.js";
 //     const user = await getUserByFirebaseUid(decodedToken.uid);
 
 //     if (!user) {
-//       return respuestaError(res, 401, "Usuario no encontrado");
+//       throwForbiddenError("Usuario no encontrado");
+
 //     }
 
 //     req.firebaseUser = decodedToken;

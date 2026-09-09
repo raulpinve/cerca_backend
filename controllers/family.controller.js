@@ -8,15 +8,12 @@ import {
   deleteFamily,
 } from "../repositories/family.repository.js";
 
-import {
-  respuestaExitosa,
-  respuestaError,
-} from "../utils/response.utils.js";
+import { respuestaExitosa } from "../utils/response.utils.js";
+import { throwNotFoundError } from "../errors/throwHTTPErrors.js";
 
 export async function create(req, res, next) {
   try {
     const { name } = req.body;
-
     const family = await createFamily(name);
     const formattedFamily = camelcaseKeys(family, { deep: true });
 
@@ -53,11 +50,7 @@ export async function getById(req, res, next) {
     const family = await getFamilyById(id);
 
     if (!family) {
-      return respuestaError(
-        res,
-        404,
-        "Familia no encontrada"
-      );
+      throwNotFoundError("Familia no encontrada");
     }
 
     return respuestaExitosa(
@@ -75,15 +68,10 @@ export async function update(req, res, next) {
   try {
     const { id } = req.params;
     const { name } = req.body;
-
     const family = await updateFamily(id, name);
 
     if (!family) {
-      return respuestaError(
-        res,
-        404,
-        "Familia no encontrada"
-      );
+      throwNotFoundError("Familia no encontrada");
     }
 
     return respuestaExitosa(
@@ -104,11 +92,7 @@ export async function remove(req, res, next) {
     const family = await deleteFamily(id);
 
     if (!family) {
-      return respuestaError(
-        res,
-        404,
-        "Familia no encontrada"
-      );
+      throwNotFoundError("Familia no encontrada");
     }
 
     return respuestaExitosa(

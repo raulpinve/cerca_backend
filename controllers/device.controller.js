@@ -7,11 +7,8 @@ import {
   deactivateDevice,
   deleteDevice,
 } from "../repositories/device.repository.js";
-
-import {
-  respuestaExitosa,
-  respuestaError,
-} from "../utils/response.utils.js";
+import {respuestaExitosa } from "../utils/response.utils.js";
+import { throwNotFoundError } from "../errors/throwHTTPErrors.js";
 
 export async function create(req, res, next) {
   try {
@@ -87,11 +84,7 @@ export async function update(req, res, next) {
     );
 
     if (!device) {
-      return respuestaError(
-        res,
-        404,
-        "Dispositivo no encontrado"
-      );
+      throwNotFoundError("Dispositivo no encontrado");
     }
 
     const formattedDevice = camelcaseKeys(
@@ -126,11 +119,7 @@ export async function deactivate(
     );
 
     if (!device) {
-      return respuestaError(
-        res,
-        404,
-        "Dispositivo no encontrado"
-      );
+      throwNotFoundError("Dispositivo no encontrado");
     }
 
     const formattedDevice = camelcaseKeys(
@@ -156,7 +145,6 @@ export async function remove(
 ) {
   try {
     const { id } = req.params;
-
     const userId = req.user.id;
 
     const device = await deleteDevice(
@@ -165,11 +153,7 @@ export async function remove(
     );
 
     if (!device) {
-      return respuestaError(
-        res,
-        404,
-        "Dispositivo no encontrado"
-      );
+      throwNotFoundError("Dispositivo no encontrado");
     }
 
     const formattedDevice = camelcaseKeys(

@@ -6,10 +6,8 @@ import {
   leaveFamily,
 } from "../repositories/family-member.repository.js";
 
-import {
-  respuestaExitosa,
-  respuestaError,
-} from "../utils/response.utils.js";
+import {respuestaExitosa} from "../utils/response.utils.js";
+import { throwBadRequestError, throwNotFoundError } from "../errors/throwHTTPErrors.js";
 
 export async function getMembers(req, res, next) {
   try {
@@ -42,14 +40,8 @@ export async function removeMember(req, res, next) {
 
     // El owner no puede eliminarse a sí mismo
     if (userId === requesterId) {
-      return respuestaError(
-        res,
-        400,
-        "El owner no puede eliminarse de esta forma"
-      );
+      throwBadRequestError(undefined, "El owner no puede eliminarse de esta forma");
     }
-    console.log(userId, requesterId);
-
     const member = await deleteFamilyMember(
       familyId,
       userId,
@@ -57,11 +49,7 @@ export async function removeMember(req, res, next) {
     );
 
     if (!member) {
-      return respuestaError(
-        res,
-        404,
-        "El miembro no existe o no tienes permisos para eliminarlo"
-      );
+      throwNotFoundError("El miembro no existe o no tienes permisos para eliminarlo");
     }
 
     const formattedMember = camelcaseKeys(
@@ -92,11 +80,7 @@ export async function leave(req, res, next) {
     );
 
     if (!member) {
-      return respuestaError(
-        res,
-        404,
-        "No perteneces a esta familia"
-      );
+      throwNotFoundError("No perteneces a esta familia");
     }
 
     const formattedMember = camelcaseKeys(

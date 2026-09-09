@@ -6,10 +6,8 @@ import {
   getDeviceLocationHistory as getDeviceLocationHistoryRepository,
 } from "../repositories/location.repository.js";
 
-import {
-  respuestaExitosa,
-  respuestaError,
-} from "../utils/response.utils.js";
+import { respuestaExitosa } from "../utils/response.utils.js";
+import { throwNotFoundError } from "../errors/throwHTTPErrors.js";
 
 export async function updateMyLocation(req, res, next) {
   try {
@@ -32,11 +30,7 @@ export async function updateMyLocation(req, res, next) {
       );
 
     if (!location) {
-      return respuestaError(
-        res,
-        404,
-        "El dispositivo no existe o no pertenece al usuario"
-      );
+        throwNotFoundError("El dispositivo no existe o no pertenece al usuario");
     }
 
     const formattedLocation = camelcaseKeys(
@@ -94,11 +88,7 @@ export async function getDeviceLocation(req, res, next) {
       );
 
     if (!location) {
-      return respuestaError(
-        res,
-        404,
-        "Ubicación no encontrada o no tienes permiso para consultarla"
-      );
+        throwNotFoundError("Ubicación no encontrada o no tienes permiso para consultarla");
     }
 
     const formattedLocation = camelcaseKeys(

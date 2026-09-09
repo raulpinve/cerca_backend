@@ -1,8 +1,5 @@
 import { pool } from "../init.db.js";
-import {
-  respuestaExitosa,
-  respuestaError,
-} from "../utils/response.utils.js";
+import { respuestaExitosa } from "../utils/response.utils.js";
 
 export async function registrarUsuario(req, res) {
   try {
@@ -53,10 +50,6 @@ export async function registrarUsuario(req, res) {
   } catch (error) {
     console.error("Error al registrar usuario:", error);
 
-    return respuestaError(
-      res,
-      500,
-      "Error interno del servidor"
-    );
+    next(error);
   }
 }

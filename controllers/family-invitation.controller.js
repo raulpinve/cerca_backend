@@ -13,31 +13,20 @@ import {
   cancelFamilyInvitation,
 } from "../repositories/family-invitation.repository.js";
 
-import {
-  respuestaExitosa,
-  respuestaError,
-} from "../utils/response.utils.js";
+import { respuestaExitosa } from "../utils/response.utils.js";
+import { throwBadRequestError, throwForbiddenError, throwNotFoundError, throwUnauthorizedError } from "../errors/throwHTTPErrors.js";
 
 export async function create(req, res, next) {
   try {
     const { familyId, email } = req.body;
-
     const invitedUser = await getUserByEmail(email);
 
     if (!invitedUser) {
-      return respuestaError(
-        res,
-        404,
-        "El usuario no existe"
-      );
+      throwNotFoundError("El usuario no existe");
     }
 
     if (invitedUser.id === req.user.id) {
-      return respuestaError(
-        res,
-        400,
-        "No puedes invitarte a ti mismo"
-      );
+      throwBadRequestError(undefined, "No puedes invitarte a ti mismo");
     }
 
     const invitation = await createFamilyInvitation(
@@ -89,19 +78,11 @@ export async function accept(req, res, next) {
     const invitation = await getInvitationById(id);
 
     if (!invitation) {
-      return respuestaError(
-        res,
-        404,
-        "Invitación no encontrada"
-      );
+      throwBadRequestError(undefined, "Invitación no encontrada");
     }
 
     if (invitation.invited_user_id !== userId) {
-      return respuestaError(
-        res,
-        403,
-        "No tienes permiso para aceptar esta invitación"
-      );
+      throwForbiddenError(undefined, "No tienes permiso para aceptar esta invitación");
     }
 
     const acceptedInvitation =
@@ -129,34 +110,19 @@ export async function reject(req, res, next) {
     const userId = req.user.id;
 
     const invitation = await getInvitationById(id);
-
     if (!invitation) {
-      return respuestaError(
-        res,
-        404,
-        "Invitación no encontrada"
-      );
+      throwNotFoundError("Invitación no encontrada");
     }
 
     if (invitation.invited_user_id !== userId) {
-      return respuestaError(
-        res,
-        403,
-        "No tienes permiso para rechazar esta invitación"
-      );
+      throwForbiddenError("No tienes permiso para rechazar esta invitación");
     }
 
     if (invitation.status !== "pending") {
-      return respuestaError(
-        res,
-        400,
-        "La invitación ya no está pendiente"
-      );
+      throwBadRequestError(undefined, "No tienes permiso para rechazar esta invitación");
     }
 
-    const rejectedInvitation =
-      await rejectFamilyInvitation(id, userId);
-
+    const rejectedInvitation = await rejectFamilyInvitation(id, userId);
     const formattedInvitation = camelcaseKeys(
       rejectedInvitation,
       { deep: true }
@@ -181,27 +147,15 @@ export async function cancel(req, res, next) {
     const invitation = await getInvitationById(id);
 
     if (!invitation) {
-      return respuestaError(
-        res,
-        404,
-        "Invitación no encontrada"
-      );
+      throwNotFoundError("Invitación no encontrada");
     }
 
     if (invitation.invited_by !== userId) {
-      return respuestaError(
-        res,
-        403,
-        "No tienes permiso para cancelar esta invitación"
-      );
+      throwForbiddenError("No tienes permiso para cancelar esta invitación");
     }
 
     if (invitation.status !== "pending") {
-      return respuestaError(
-        res,
-        400,
-        "La invitación ya no está pendiente"
-      );
+      throwBadRequestError(undefined,  "La invitación ya no está pendiente");
     }
 
     const cancelledInvitation =
