@@ -1,33 +1,37 @@
 import { auth } from "../config/firebase.js";
+import { getUserByFirebaseUid } from "../repositories/user.repository.js";
+import { respuestaError } from "../utils/response.utils.js";
 
-// export async function autenticarToken(req, res, next) {
+// export async function authenticateToken(req, res, next) {
 //   try {
 //     const authHeader = req.headers.authorization;
 
 //     if (!authHeader?.startsWith("Bearer ")) {
-//       return res.status(401).json({
-//         error: "Token no proporcionado",
-//       });
+//       return respuestaError(res, 401, "Token no proporcionado");
 //     }
 
 //     const token = authHeader.split("Bearer ")[1];
 
 //     const decodedToken = await auth.verifyIdToken(token);
 
-//     req.user = decodedToken;
+//     const user = await getUserByFirebaseUid(decodedToken.uid);
+
+//     if (!user) {
+//       return respuestaError(res, 401, "Usuario no encontrado");
+//     }
+
+//     req.firebaseUser = decodedToken;
+//     req.user = user;
 
 //     next();
 //   } catch (error) {
-//     console.error("Error verificando token:", error);
-
-//     return res.status(401).json({
-//       error: "Token inválido o expirado",
-//     });
+//     next(error);
 //   }
 // }
 
 export function authenticateToken(req, res, next) {
   req.user = {
+    id: "71f70504-5155-4eff-ba88-977337ad8673",
     uid: "google-user-123",
     email: "prueba@gmail.com",
     email_verified: true,

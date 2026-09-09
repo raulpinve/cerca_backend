@@ -8,15 +8,23 @@ app.use(express.json());
 // Rutas 
 import userRoutes from './routes/user.routes.js';
 import familyRoutes from "./routes/family.routes.js";
-import { manejarErrores } from "./middlewares/error.middleware.js";
+import handleErrorResponse from "./errors/handleErrorResponse.js";
+import familyInvitationRoutes from "./routes/family-invitation.routes.js";
+
+// import {
+//   startFamilyInvitationExpirationJob,
+// } from "./jobs/family-invitation-expiration.job.js";
 
 app.use("/families", familyRoutes);
 app.use("/users", userRoutes);
-app.use(manejarErrores);
+app.use("/family-invitations", familyInvitationRoutes);
+app.use(handleErrorResponse);
 
 app.get('/status', (req, res) => {
   res.send('OK!!!');
 });
+
+// startFamilyInvitationExpirationJob();
 
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);

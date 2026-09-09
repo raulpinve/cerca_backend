@@ -10,7 +10,7 @@ import {
 
 import { authenticateToken } from "../middlewares/auth.middleware.js";
 
-import { validate } from "../middlewares/validation.middleware.js";
+import validate from "../middlewares/error.validators.middleware.js";
 
 import {
   createFamilyValidator,

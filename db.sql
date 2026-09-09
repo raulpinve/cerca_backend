@@ -27,17 +27,21 @@ CREATE TABLE families (
 
 -- FAMILY MEMBERS
 CREATE TABLE family_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
     family_id UUID NOT NULL
         REFERENCES families(id)
         ON DELETE CASCADE,
+
     user_id UUID NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,
+
     role VARCHAR(20) NOT NULL DEFAULT 'member',
-    joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (family_id, user_id),
-    CONSTRAINT family_members_role_check
-        CHECK (role IN ('owner', 'member'))
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    UNIQUE (family_id, user_id)
 );
 
 CREATE UNIQUE INDEX one_owner_per_family
@@ -46,22 +50,40 @@ WHERE role = 'owner';
 
 CREATE TABLE family_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
     family_id UUID NOT NULL
         REFERENCES families(id)
         ON DELETE CASCADE,
+
     invited_user_id UUID NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,
+
     invited_by UUID NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,
+
     token UUID NOT NULL DEFAULT gen_random_uuid(),
+
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
-    expires_at TIMESTAMPTZ NOT NULL,
+
+    expires_at TIMESTAMPTZ NOT NULL
+        DEFAULT NOW() + INTERVAL '7 days',
+
     accepted_at TIMESTAMPTZ,
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
     CONSTRAINT family_invitations_status_check
-        CHECK (status IN ('pending', 'accepted', 'rejected', 'expired'))
+        CHECK (
+            status IN (
+                'pending',
+                'accepted',
+                'rejected',
+                'cancelled',
+                'expired'
+            )
+        )
 );
 
 -- DEVICES
