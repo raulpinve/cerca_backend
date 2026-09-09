@@ -41,7 +41,10 @@ CREATE TABLE family_members (
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    UNIQUE (family_id, user_id)
+    UNIQUE (family_id, user_id),
+
+    CONSTRAINT family_members_role_check
+        CHECK (role IN ('owner', 'member'))
 );
 
 CREATE UNIQUE INDEX one_owner_per_family
@@ -50,30 +53,21 @@ WHERE role = 'owner';
 
 CREATE TABLE family_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
     family_id UUID NOT NULL
         REFERENCES families(id)
         ON DELETE CASCADE,
-
     invited_user_id UUID NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,
-
     invited_by UUID NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,
-
     token UUID NOT NULL DEFAULT gen_random_uuid(),
-
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
-
     expires_at TIMESTAMPTZ NOT NULL
         DEFAULT NOW() + INTERVAL '7 days',
-
     accepted_at TIMESTAMPTZ,
-
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
     CONSTRAINT family_invitations_status_check
         CHECK (
             status IN (

@@ -10,6 +10,7 @@ import userRoutes from './routes/user.routes.js';
 import familyRoutes from "./routes/family.routes.js";
 import handleErrorResponse from "./errors/handleErrorResponse.js";
 import familyInvitationRoutes from "./routes/family-invitation.routes.js";
+import familyMemberRoutes from "./routes/family-member.routes.js";
 
 // import {
 //   startFamilyInvitationExpirationJob,
@@ -18,6 +19,7 @@ import familyInvitationRoutes from "./routes/family-invitation.routes.js";
 app.use("/families", familyRoutes);
 app.use("/users", userRoutes);
 app.use("/family-invitations", familyInvitationRoutes);
+app.use("/families", familyMemberRoutes);
 app.use(handleErrorResponse);
 
 app.get('/status', (req, res) => {
