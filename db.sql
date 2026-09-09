@@ -113,6 +113,32 @@ CREATE TABLE current_locations (
         CHECK (accuracy_m IS NULL OR accuracy_m >= 0)
 );
 
+CREATE TABLE location_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_id UUID NOT NULL
+        REFERENCES devices(id)
+        ON DELETE CASCADE,
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    accuracy_m DOUBLE PRECISION,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT location_history_latitude_range
+        CHECK (latitude BETWEEN -90 AND 90),
+    CONSTRAINT location_history_longitude_range
+        CHECK (longitude BETWEEN -180 AND 180),
+    CONSTRAINT location_history_accuracy_positive
+        CHECK (
+            accuracy_m IS NULL
+            OR accuracy_m >= 0
+        )
+);
+
+CREATE INDEX idx_location_history_device_id
+ON location_history(device_id);
+
+CREATE INDEX idx_location_history_recorded_at
+ON location_history(recorded_at);
+
 -- ÍNDICES
 CREATE INDEX idx_family_members_user_id
     ON family_members(user_id);

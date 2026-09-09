@@ -31,7 +31,7 @@ import { respuestaError } from "../utils/response.utils.js";
 
 export function authenticateToken(req, res, next) {
   req.user = {
-    id: "1cbecc1f-f619-40a2-8e04-8ee91afde3fa",
+    id: "c3b239a3-ad48-4463-9729-0028b8c92bbf",
     uid: "google-user-123",
     email: "prueba@gmail.com",
     email_verified: true,
