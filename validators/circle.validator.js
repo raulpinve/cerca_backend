@@ -1,29 +1,29 @@
 import { body, param } from "express-validator";
 
-export const createFamilyValidator = [
+export const createCircleValidator = [
   body("name")
     .trim()
     .notEmpty()
-    .withMessage("El nombre de la familia es obligatorio")
+    .withMessage("El nombre del círculo es obligatorio")
     .isLength({ max: 100 })
     .withMessage("El nombre no puede superar los 100 caracteres"),
 ];
 
-export const updateFamilyValidator = [
+export const updateCircleValidator = [
   param("id")
     .isUUID()
-    .withMessage("El ID de la familia no es válido"),
+    .withMessage("El ID del círculo no es válido"),
 
   body("name")
     .trim()
     .notEmpty()
-    .withMessage("El nombre de la familia es obligatorio")
+    .withMessage("El nombre del círculo es obligatorio")
     .isLength({ max: 100 })
     .withMessage("El nombre no puede superar los 100 caracteres"),
 ];
 
-export const getFamilyValidator = [
+export const getCircleValidator = [
   param("id")
     .isUUID()
-    .withMessage("El ID de la familia no es válido"),
+    .withMessage("El ID del círculo no es válido"),
 ];

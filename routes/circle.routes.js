@@ -6,17 +6,17 @@ import {
   getById,
   update,
   remove,
-} from "../controllers/family.controller.js";
+} from "../controllers/circle.controller.js";
 
 import { authenticateToken } from "../middlewares/auth.middleware.js";
 
 import validate from "../middlewares/error.validators.middleware.js";
 
 import {
-  createFamilyValidator,
-  updateFamilyValidator,
-  getFamilyValidator,
-} from "../validators/family.validator.js";
+  createCircleValidator,
+  updateCircleValidator,
+  getCircleValidator,
+} from "../validators/circle.validator.js";
 
 const router = Router();
 
@@ -24,7 +24,7 @@ router.use(authenticateToken);
 
 router.post(
   "/",
-  createFamilyValidator,
+  createCircleValidator,
   validate,
   create
 );
@@ -36,21 +36,21 @@ router.get(
 
 router.get(
   "/:id",
-  getFamilyValidator,
+  getCircleValidator,
   validate,
   getById
 );
 
 router.put(
   "/:id",
-  updateFamilyValidator,
+  updateCircleValidator,
   validate,
   update
 );
 
 router.delete(
   "/:id",
-  getFamilyValidator,
+  getCircleValidator,
   validate,
   remove
 );

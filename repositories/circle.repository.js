@@ -1,9 +1,9 @@
 import { pool } from "../init.db.js";
 
-export async function createFamily(name) {
+export async function createCircle(name) {
   const { rows } = await pool.query(
     `
-    INSERT INTO families (name)
+    INSERT INTO circles (name)
     VALUES ($1)
     RETURNING id, name, created_at
     `,
@@ -13,11 +13,11 @@ export async function createFamily(name) {
   return rows[0];
 }
 
-export async function getFamilies() {
+export async function getCircles() {
   const { rows } = await pool.query(
     `
     SELECT id, name, created_at
-    FROM families
+    FROM circles
     ORDER BY created_at DESC
     `
   );
@@ -25,11 +25,11 @@ export async function getFamilies() {
   return rows;
 }
 
-export async function getFamilyById(id) {
+export async function getCircleById(id) {
   const { rows } = await pool.query(
     `
     SELECT id, name, created_at
-    FROM families
+    FROM circles
     WHERE id = $1
     `,
     [id]
@@ -38,10 +38,10 @@ export async function getFamilyById(id) {
   return rows[0];
 }
 
-export async function updateFamily(id, name) {
+export async function updateCircle(id, name) {
   const { rows } = await pool.query(
     `
-    UPDATE families
+    UPDATE circles
     SET name = $1
     WHERE id = $2
     RETURNING id, name, created_at
@@ -52,10 +52,10 @@ export async function updateFamily(id, name) {
   return rows[0];
 }
 
-export async function deleteFamily(id) {
+export async function deleteCircle(id) {
   const { rows } = await pool.query(
     `
-    DELETE FROM families
+    DELETE FROM circles
     WHERE id = $1
     RETURNING id, name, created_at
     `,
