@@ -1,14 +1,14 @@
 import { pool } from "../init.db.js";
 
-export async function createFamilyInvitation(
-  familyId,
+export async function createCircleInvitation(
+  circleId,
   invitedUserId,
   invitedBy
 ) {
   const { rows } = await pool.query(
     `
-    INSERT INTO family_invitations (
-      family_id,
+    INSERT INTO circle_invitations (
+      circle_id,
       invited_user_id,
       invited_by
     )
@@ -16,7 +16,7 @@ export async function createFamilyInvitation(
     RETURNING *
     `,
     [
-      familyId,
+      circleId,
       invitedUserId,
       invitedBy,
     ]
@@ -29,32 +29,25 @@ export async function getPendingInvitations(userId) {
   const { rows } = await pool.query(
     `
     SELECT
-      fi.id,
-      fi.token,
-      fi.status,
-      fi.expires_at,
-      fi.created_at,
-
-      f.id AS family_id,
-      f.name AS family_name,
-
+      ci.id,
+      ci.token,
+      ci.status,
+      ci.expires_at,
+      ci.created_at,
+      c.id AS circle_id,
+      c.name AS circle_name,
       u.id AS invited_by_id,
       u.first_name AS invited_by_first_name,
       u.last_name AS invited_by_last_name
-
-    FROM family_invitations fi
-
-    INNER JOIN families f
-      ON f.id = fi.family_id
-
+    FROM circle_invitations ci
+    INNER JOIN circles c
+      ON c.id = ci.circle_id
     INNER JOIN users u
-      ON u.id = fi.invited_by
-
-    WHERE fi.invited_user_id = $1
-      AND fi.status = 'pending'
-      AND fi.expires_at > NOW()
-
-    ORDER BY fi.created_at DESC
+      ON u.id = ci.invited_by
+    WHERE ci.invited_user_id = $1
+      AND ci.status = 'pending'
+      AND ci.expires_at > NOW()
+    ORDER BY ci.created_at DESC
     `,
     [userId]
   );
@@ -67,7 +60,7 @@ export async function getInvitationById(id) {
     `
     SELECT
       id,
-      family_id,
+      circle_id,
       invited_user_id,
       invited_by,
       token,
@@ -75,7 +68,7 @@ export async function getInvitationById(id) {
       expires_at,
       accepted_at,
       created_at
-    FROM family_invitations
+    FROM circle_invitations
     WHERE id = $1
     `,
     [id]
@@ -84,17 +77,17 @@ export async function getInvitationById(id) {
   return rows[0];
 }
 
-export async function rejectFamilyInvitation(id, userId) {
+export async function rejectCircleInvitation(id, userId) {
   const { rows } = await pool.query(
     `
-    UPDATE family_invitations
+    UPDATE circle_invitations
     SET status = 'rejected'
     WHERE id = $1
       AND invited_user_id = $2
       AND status = 'pending'
     RETURNING
       id,
-      family_id,
+      circle_id,
       invited_user_id,
       invited_by,
       token,
@@ -109,17 +102,17 @@ export async function rejectFamilyInvitation(id, userId) {
   return rows[0];
 }
 
-export async function cancelFamilyInvitation(id, userId) {
+export async function cancelCircleInvitation(id, userId) {
   const { rows } = await pool.query(
     `
-    UPDATE family_invitations
+    UPDATE circle_invitations
     SET status = 'cancelled'
     WHERE id = $1
       AND invited_by = $2
       AND status = 'pending'
     RETURNING
       id,
-      family_id,
+      circle_id,
       invited_user_id,
       invited_by,
       token,
@@ -134,10 +127,10 @@ export async function cancelFamilyInvitation(id, userId) {
   return rows[0];
 }
 
-export async function expireFamilyInvitations() {
+export async function expireCircleInvitations() {
   const { rows } = await pool.query(
     `
-    UPDATE family_invitations
+    UPDATE circle_invitations
     SET status = 'expired'
     WHERE status = 'pending'
       AND expires_at <= NOW()
@@ -148,7 +141,7 @@ export async function expireFamilyInvitations() {
   return rows;
 }
 
-export async function acceptFamilyInvitation(id, userId) {
+export async function acceptCircleInvitation(id, userId) {
   const client = await pool.connect();
 
   try {
@@ -158,11 +151,11 @@ export async function acceptFamilyInvitation(id, userId) {
       `
       SELECT
         id,
-        family_id,
+        circle_id,
         invited_user_id,
         status,
         expires_at
-      FROM family_invitations
+      FROM circle_invitations
       WHERE id = $1
       FOR UPDATE
       `,
@@ -203,7 +196,7 @@ export async function acceptFamilyInvitation(id, userId) {
     if (new Date(invitation.expires_at) <= new Date()) {
       await client.query(
         `
-        UPDATE family_invitations
+        UPDATE circle_invitations
         SET status = 'expired'
         WHERE id = $1
         `,
@@ -223,31 +216,31 @@ export async function acceptFamilyInvitation(id, userId) {
 
     await client.query(
       `
-      INSERT INTO family_members (
-        family_id,
+      INSERT INTO circle_members (
+        circle_id,
         user_id,
         role
       )
       VALUES ($1, $2, 'member')
-      ON CONFLICT (family_id, user_id)
+      ON CONFLICT (circle_id, user_id)
       DO NOTHING
       `,
       [
-        invitation.family_id,
+        invitation.circle_id,
         invitation.invited_user_id,
       ]
     );
 
     const result = await client.query(
       `
-      UPDATE family_invitations
+      UPDATE circle_invitations
       SET
         status = 'accepted',
         accepted_at = NOW()
       WHERE id = $1
       RETURNING
         id,
-        family_id,
+        circle_id,
         invited_user_id,
         invited_by,
         token,

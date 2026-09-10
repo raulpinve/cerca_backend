@@ -5,20 +5,26 @@ import {
 } from "../repositories/user.repository.js";
 
 import {
-  createFamilyInvitation,
+  createCircleInvitation,
   getPendingInvitations,
   getInvitationById,
-  acceptFamilyInvitation,
-  rejectFamilyInvitation,
-  cancelFamilyInvitation,
-} from "../repositories/family-invitation.repository.js";
+  acceptCircleInvitation,
+  rejectCircleInvitation,
+  cancelCircleInvitation,
+} from "../repositories/circleinvitation.repository.js";
 
 import { respuestaExitosa } from "../utils/response.utils.js";
-import { throwBadRequestError, throwForbiddenError, throwNotFoundError, throwUnauthorizedError } from "../errors/throwHTTPErrors.js";
+
+import {
+  throwBadRequestError,
+  throwForbiddenError,
+  throwNotFoundError,
+} from "../errors/throwHTTPErrors.js";
 
 export async function create(req, res, next) {
   try {
-    const { familyId, email } = req.body;
+    const { circleId, email } = req.body;
+
     const invitedUser = await getUserByEmail(email);
 
     if (!invitedUser) {
@@ -26,11 +32,14 @@ export async function create(req, res, next) {
     }
 
     if (invitedUser.id === req.user.id) {
-      throwBadRequestError(undefined, "No puedes invitarte a ti mismo");
+      throwBadRequestError(
+        undefined,
+        "No puedes invitarte a ti mismo"
+      );
     }
 
-    const invitation = await createFamilyInvitation(
-      familyId,
+    const invitation = await createCircleInvitation(
+      circleId,
       invitedUser.id,
       req.user.id
     );
@@ -39,7 +48,7 @@ export async function create(req, res, next) {
       res,
       201,
       "Invitación creada correctamente",
-      invitation
+      camelcaseKeys(invitation, { deep: true })
     );
   } catch (error) {
     next(error);
@@ -50,9 +59,7 @@ export async function getPending(req, res, next) {
   try {
     const userId = req.user.id;
 
-    const invitations = await getPendingInvitations(
-      userId
-    );
+    const invitations = await getPendingInvitations(userId);
 
     const formattedInvitations = camelcaseKeys(
       invitations,
@@ -78,15 +85,18 @@ export async function accept(req, res, next) {
     const invitation = await getInvitationById(id);
 
     if (!invitation) {
-      throwBadRequestError(undefined, "Invitación no encontrada");
+      throwNotFoundError("Invitación no encontrada");
     }
 
     if (invitation.invited_user_id !== userId) {
-      throwForbiddenError(undefined, "No tienes permiso para aceptar esta invitación");
+      throwForbiddenError(
+        undefined,
+        "No tienes permiso para aceptar esta invitación"
+      );
     }
 
     const acceptedInvitation =
-      await acceptFamilyInvitation(id, userId);
+      await acceptCircleInvitation(id, userId);
 
     const formattedInvitation = camelcaseKeys(
       acceptedInvitation,
@@ -110,19 +120,28 @@ export async function reject(req, res, next) {
     const userId = req.user.id;
 
     const invitation = await getInvitationById(id);
+
     if (!invitation) {
       throwNotFoundError("Invitación no encontrada");
     }
 
     if (invitation.invited_user_id !== userId) {
-      throwForbiddenError("No tienes permiso para rechazar esta invitación");
+      throwForbiddenError(
+        undefined,
+        "No tienes permiso para rechazar esta invitación"
+      );
     }
 
     if (invitation.status !== "pending") {
-      throwBadRequestError(undefined, "No tienes permiso para rechazar esta invitación");
+      throwBadRequestError(
+        undefined,
+        "La invitación ya no está pendiente"
+      );
     }
 
-    const rejectedInvitation = await rejectFamilyInvitation(id, userId);
+    const rejectedInvitation =
+      await rejectCircleInvitation(id, userId);
+
     const formattedInvitation = camelcaseKeys(
       rejectedInvitation,
       { deep: true }
@@ -151,15 +170,21 @@ export async function cancel(req, res, next) {
     }
 
     if (invitation.invited_by !== userId) {
-      throwForbiddenError("No tienes permiso para cancelar esta invitación");
+      throwForbiddenError(
+        undefined,
+        "No tienes permiso para cancelar esta invitación"
+      );
     }
 
     if (invitation.status !== "pending") {
-      throwBadRequestError(undefined,  "La invitación ya no está pendiente");
+      throwBadRequestError(
+        undefined,
+        "La invitación ya no está pendiente"
+      );
     }
 
     const cancelledInvitation =
-      await cancelFamilyInvitation(id, userId);
+      await cancelCircleInvitation(id, userId);
 
     const formattedInvitation = camelcaseKeys(
       cancelledInvitation,

@@ -9,7 +9,7 @@ app.use(express.json());
 import circleRoutes from "./routes/circle.routes.js";
 import userRoutes from './routes/user.routes.js';
 import handleErrorResponse from "./errors/handleErrorResponse.js";
-import familyInvitationRoutes from "./routes/family-invitation.routes.js";
+import circleInvitationRoutes from "./routes/circleInvitation.routes.js";
 import familyMemberRoutes from "./routes/family-member.routes.js";
 import deviceRoutes from "./routes/device.routes.js";
 import locationRoutes from "./routes/location.routes.js";
@@ -18,9 +18,10 @@ import locationRoutes from "./routes/location.routes.js";
 //   startFamilyInvitationExpirationJob,
 // } from "./jobs/family-invitation-expiration.job.js";
 
-app.use("/families", familyMemberRoutes);
-app.use("/family-invitations", familyInvitationRoutes);
 app.use("/circles", circleRoutes);
+app.use("/circle-invitations", circleInvitationRoutes);
+
+app.use("/families", familyMemberRoutes);
 app.use("/devices", deviceRoutes);
 app.use("/users", userRoutes);
 app.use("/locations", locationRoutes);

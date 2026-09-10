@@ -32,7 +32,7 @@ import { getUserByFirebaseUid } from "../repositories/user.repository.js";
 
 export function authenticateToken(req, res, next) {
   req.user = {
-    id: "c3b239a3-ad48-4463-9729-0028b8c92bbf",
+    id: "05516ece-a9f5-4aa9-bdea-e7e98fd1df1b",
     uid: "google-user-123",
     email: "prueba@gmail.com",
     email_verified: true,

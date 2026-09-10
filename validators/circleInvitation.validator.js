@@ -1,6 +1,6 @@
 import { body, param } from "express-validator";
 
-export const createFamilyInvitationValidator = [
+export const createCircleInvitationValidator = [
   body("email")
     .trim()
     .notEmpty()
@@ -8,14 +8,14 @@ export const createFamilyInvitationValidator = [
     .isEmail()
     .withMessage("El correo electrónico no es válido"),
 
-  body("familyId")
+  body("circleId")
     .notEmpty()
-    .withMessage("El ID de la familia es obligatorio")
+    .withMessage("El ID del círculo es obligatorio")
     .isUUID()
-    .withMessage("El ID de la familia no es válido"),
+    .withMessage("El ID del círculo no es válido"),
 ];
 
-export const familyInvitationIdValidator = [
+export const circleInvitationIdValidator = [
   param("id")
     .isUUID()
     .withMessage("El ID de la invitación no es válido"),

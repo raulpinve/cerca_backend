@@ -6,7 +6,7 @@ import {
   accept,
   reject,
   cancel,
-} from "../controllers/family-invitation.controller.js";
+} from "../controllers/circleInvitation.controller.js";
 
 import {
   authenticateToken,
@@ -15,9 +15,9 @@ import {
 import validate from "../middlewares/error.validators.middleware.js";
 
 import {
-  createFamilyInvitationValidator,
-  familyInvitationIdValidator,
-} from "../validators/family-invitation.validator.js";
+  createCircleInvitationValidator,
+  circleInvitationIdValidator,
+} from "../validators/circleInvitation.validator.js";
 
 const router = Router();
 
@@ -25,7 +25,7 @@ router.use(authenticateToken);
 
 router.post(
   "/",
-  createFamilyInvitationValidator,
+  createCircleInvitationValidator,
   validate,
   create
 );
@@ -37,23 +37,23 @@ router.get(
 
 router.put(
   "/:id/accept",
-  familyInvitationIdValidator,
+  circleInvitationIdValidator,
   validate,
   accept
 );
 
 router.put(
   "/:id/reject",
-  familyInvitationIdValidator,
+  circleInvitationIdValidator,
   validate,
   reject
 );
 
 router.delete(
   "/:id",
-  familyInvitationIdValidator,
+  circleInvitationIdValidator,
   validate,
   cancel
 );
 
-export default router;  
+export default router;
