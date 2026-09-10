@@ -1,7 +1,7 @@
 import { pool } from "../init.db.js";
 import { respuestaExitosa } from "../utils/response.utils.js";
 
-export async function registrarUsuario(req, res) {
+export async function registrarUsuario(req, res, next) {
   try {
     const firebaseUid = req.user.uid;
     const email = req.user.email;
