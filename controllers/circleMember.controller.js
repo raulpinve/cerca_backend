@@ -1,21 +1,23 @@
 import camelcaseKeys from "camelcase-keys";
 
 import {
-  getFamilyMembers,
-  deleteFamilyMember,
-  leaveFamily,
-} from "../repositories/family-member.repository.js";
+  getCircleMembers,
+  deleteCircleMember,
+  leaveCircle,
+} from "../repositories/circleMember.repository.js";
 
-import {respuestaExitosa} from "../utils/response.utils.js";
-import { throwBadRequestError, throwNotFoundError } from "../errors/throwHTTPErrors.js";
+import { respuestaExitosa } from "../utils/response.utils.js";
+
+import {
+  throwBadRequestError,
+  throwNotFoundError,
+} from "../errors/throwHTTPErrors.js";
 
 export async function getMembers(req, res, next) {
   try {
-    const { familyId } = req.params;
+    const { circleId } = req.params;
 
-    const members = await getFamilyMembers(
-      familyId
-    );
+    const members = await getCircleMembers(circleId);
 
     const formattedMembers = camelcaseKeys(
       members,
@@ -25,7 +27,7 @@ export async function getMembers(req, res, next) {
     return respuestaExitosa(
       res,
       200,
-      "Miembros de la familia obtenidos correctamente",
+      "Miembros del círculo obtenidos correctamente",
       formattedMembers
     );
   } catch (error) {
@@ -35,21 +37,27 @@ export async function getMembers(req, res, next) {
 
 export async function removeMember(req, res, next) {
   try {
-    const { familyId, userId } = req.params;
+    const { circleId, userId } = req.params;
     const requesterId = req.user.id;
 
     // El owner no puede eliminarse a sí mismo
     if (userId === requesterId) {
-      throwBadRequestError(undefined, "El owner no puede eliminarse de esta forma");
+      throwBadRequestError(
+        undefined,
+        "El owner no puede eliminarse de esta forma"
+      );
     }
-    const member = await deleteFamilyMember(
-      familyId,
+
+    const member = await deleteCircleMember(
+      circleId,
       userId,
       requesterId
     );
 
     if (!member) {
-      throwNotFoundError("El miembro no existe o no tienes permisos para eliminarlo");
+      throwNotFoundError(
+        "El miembro no existe o no tienes permisos para eliminarlo"
+      );
     }
 
     const formattedMember = camelcaseKeys(
@@ -70,17 +78,18 @@ export async function removeMember(req, res, next) {
 
 export async function leave(req, res, next) {
   try {
-    const { familyId } = req.params;
-
+    const { circleId } = req.params;
     const userId = req.user.id;
 
-    const member = await leaveFamily(
-      familyId,
+    const member = await leaveCircle(
+      circleId,
       userId
     );
 
     if (!member) {
-      throwNotFoundError("No perteneces a esta familia");
+      throwNotFoundError(
+        "No perteneces a este círculo"
+      );
     }
 
     const formattedMember = camelcaseKeys(
@@ -91,7 +100,7 @@ export async function leave(req, res, next) {
     return respuestaExitosa(
       res,
       200,
-      "Has salido de la familia correctamente",
+      "Has salido del círculo correctamente",
       formattedMember
     );
   } catch (error) {

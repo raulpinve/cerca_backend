@@ -1,60 +1,55 @@
 import { pool } from "../init.db.js";
 
-export async function getFamilyMembers(familyId) {
+export async function getCircleMembers(circleId) {
   const { rows } = await pool.query(
     `
     SELECT
-      fm.id,
-      fm.family_id,
-      fm.user_id,
-      fm.role,
-      fm.created_at,
-
+      cm.id,
+      cm.circle_id,
+      cm.user_id,
+      cm.role,
+      cm.created_at,
       u.first_name,
       u.last_name,
       u.email
-
-    FROM family_members fm
-
+    FROM circle_members cm
     INNER JOIN users u
-      ON u.id = fm.user_id
-
-    WHERE fm.family_id = $1
-
-    ORDER BY fm.created_at ASC
+      ON u.id = cm.user_id
+    WHERE cm.circle_id = $1
+    ORDER BY cm.created_at ASC
     `,
-    [familyId]
+    [circleId]
   );
 
   return rows;
 }
 
-export async function deleteFamilyMember(
-  familyId,
+export async function deleteCircleMember(
+  circleId,
   userId,
   requesterId
 ) {
   const { rows } = await pool.query(
     `
-    DELETE FROM family_members
-    WHERE family_id = $1
+    DELETE FROM circle_members
+    WHERE circle_id = $1
       AND user_id = $2
       AND EXISTS (
         SELECT 1
-        FROM family_members
-        WHERE family_id = $1
+        FROM circle_members
+        WHERE circle_id = $1
           AND user_id = $3
           AND role = 'owner'
       )
     RETURNING
       id,
-      family_id,
+      circle_id,
       user_id,
       role,
       created_at
     `,
     [
-      familyId,
+      circleId,
       userId,
       requesterId,
     ]
@@ -63,25 +58,24 @@ export async function deleteFamilyMember(
   return rows[0];
 }
 
-export async function leaveFamily(
-  familyId,
+export async function leaveCircle(
+  circleId,
   userId
 ) {
   const { rows } = await pool.query(
     `
-    DELETE FROM family_members
-    WHERE family_id = $1
+    DELETE FROM circle_members
+    WHERE circle_id = $1
       AND user_id = $2
-
     RETURNING
       id,
-      family_id,
+      circle_id,
       user_id,
       role,
       created_at
     `,
     [
-      familyId,
+      circleId,
       userId,
     ]
   );

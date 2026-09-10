@@ -9,14 +9,16 @@ import {
 } from "../repositories/circle.repository.js";
 
 import { respuestaExitosa } from "../utils/response.utils.js";
-
 import { throwNotFoundError } from "../errors/throwHTTPErrors.js";
 
 export async function create(req, res, next) {
   try {
     const { name } = req.body;
 
-    const circle = await createCircle(name);
+    const circle = await createCircle(
+      name,
+      req.user.id
+    );
 
     const formattedCircle = camelcaseKeys(
       circle,
