@@ -2,21 +2,19 @@ import { Router } from "express";
 
 import {
   updateMyLocation,
-  getFamilyLocations,
+  getCircleLocations,
   getDeviceLocation,
   getDeviceLocationHistory,
 } from "../controllers/location.controller.js";
 
 import {
   updateLocationValidator,
-  familyIdValidator,
+  circleIdValidator,
   deviceIdValidator,
   locationHistoryValidator,
 } from "../validators/location.validators.js";
 
-import {
-  authenticateToken,
-} from "../middlewares/auth.middleware.js";
+import { authenticateToken } from "../middlewares/auth.middleware.js";
 
 import handleValidationErrors from "../middlewares/error.validators.middleware.js";
 
@@ -32,10 +30,10 @@ router.put(
 );
 
 router.get(
-  "/families/:familyId",
-  familyIdValidator,
+  "/circles/:circleId",
+  circleIdValidator,
   handleValidationErrors,
-  getFamilyLocations
+  getCircleLocations
 );
 
 router.get(

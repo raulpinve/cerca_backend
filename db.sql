@@ -141,7 +141,6 @@ CREATE TABLE current_locations (
         )
 );
 
-
 -- LOCATION HISTORY
 CREATE TABLE location_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -168,7 +167,6 @@ CREATE TABLE location_history (
             OR accuracy_m >= 0
         )
 );
-
 
 -- ÍNDICES
 CREATE INDEX idx_circle_members_user_id

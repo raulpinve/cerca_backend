@@ -14,24 +14,18 @@ import circleMemberRoutes from "./routes/circleMember.routes.js";
 import deviceRoutes from "./routes/device.routes.js";
 import locationRoutes from "./routes/location.routes.js";
 
-// import {
-//   startFamilyInvitationExpirationJob,
-// } from "./jobs/family-invitation-expiration.job.js";
-
 app.use("/circles", circleRoutes);
 app.use("/circle-invitations", circleInvitationRoutes);
 app.use("/circles", circleMemberRoutes);
-
 app.use("/devices", deviceRoutes);
 app.use("/users", userRoutes);
 app.use("/locations", locationRoutes);
+
 app.use(handleErrorResponse);
 
 app.get('/status', (req, res) => {
   res.send('OK!!!');
 });
-
-// startFamilyInvitationExpirationJob();
 
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);

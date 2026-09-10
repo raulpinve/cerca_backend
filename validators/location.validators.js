@@ -19,10 +19,10 @@ export const updateLocationValidator = [
     .withMessage("La precisión debe ser un número mayor o igual a 0"),
 ];
 
-export const familyIdValidator = [
-  param("familyId")
+export const circleIdValidator = [
+  param("circleId")
     .isUUID()
-    .withMessage("El ID de la familia no es válido"),
+    .withMessage("El ID del círculo no es válido"),
 ];
 
 export const deviceIdValidator = [

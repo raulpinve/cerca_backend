@@ -1,12 +1,14 @@
 import camelcaseKeys from "camelcase-keys";
+
 import {
   updateMyLocation as updateMyLocationRepository,
-  getFamilyLocations as getFamilyLocationsRepository,
+  getCircleLocations as getCircleLocationsRepository,
   getDeviceLocation as getDeviceLocationRepository,
   getDeviceLocationHistory as getDeviceLocationHistoryRepository,
 } from "../repositories/location.repository.js";
 
 import { respuestaExitosa } from "../utils/response.utils.js";
+
 import { throwNotFoundError } from "../errors/throwHTTPErrors.js";
 
 export async function updateMyLocation(req, res, next) {
@@ -30,7 +32,9 @@ export async function updateMyLocation(req, res, next) {
       );
 
     if (!location) {
-        throwNotFoundError("El dispositivo no existe o no pertenece al usuario");
+      throwNotFoundError(
+        "El dispositivo no existe o no pertenece al usuario"
+      );
     }
 
     const formattedLocation = camelcaseKeys(
@@ -49,14 +53,14 @@ export async function updateMyLocation(req, res, next) {
   }
 }
 
-export async function getFamilyLocations(req, res, next) {
+export async function getCircleLocations(req, res, next) {
   try {
-    const { familyId } = req.params;
+    const { circleId } = req.params;
     const userId = req.user.id;
 
     const locations =
-      await getFamilyLocationsRepository(
-        familyId,
+      await getCircleLocationsRepository(
+        circleId,
         userId
       );
 
@@ -68,7 +72,7 @@ export async function getFamilyLocations(req, res, next) {
     return respuestaExitosa(
       res,
       200,
-      "Ubicaciones de la familia obtenidas correctamente",
+      "Ubicaciones del círculo obtenidas correctamente",
       formattedLocations
     );
   } catch (error) {
@@ -88,7 +92,9 @@ export async function getDeviceLocation(req, res, next) {
       );
 
     if (!location) {
-        throwNotFoundError("Ubicación no encontrada o no tienes permiso para consultarla");
+      throwNotFoundError(
+        "Ubicación no encontrada o no tienes permiso para consultarla"
+      );
     }
 
     const formattedLocation = camelcaseKeys(
@@ -114,9 +120,7 @@ export async function getDeviceLocationHistory(
 ) {
   try {
     const { deviceId } = req.params;
-
     const userId = req.user.id;
-
     const limit = Number(req.query.limit) || 20;
 
     const locations =

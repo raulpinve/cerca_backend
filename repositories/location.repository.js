@@ -104,8 +104,8 @@ export async function updateMyLocation(
   }
 }
 
-export async function getFamilyLocations(
-  familyId,
+export async function getCircleLocations(
+  circleId,
   userId
 ) {
   const { rows } = await pool.query(
@@ -124,18 +124,18 @@ export async function getFamilyLocations(
     FROM current_locations cl
     INNER JOIN devices d
       ON d.id = cl.device_id
-    INNER JOIN family_members fm
-      ON fm.user_id = d.user_id
-    WHERE fm.family_id = $1
+    INNER JOIN circle_members cm
+      ON cm.user_id = d.user_id
+    WHERE cm.circle_id = $1
       AND EXISTS (
         SELECT 1
-        FROM family_members requester_fm
-        WHERE requester_fm.family_id = $1
-          AND requester_fm.user_id = $2
+        FROM circle_members requester_cm
+        WHERE requester_cm.circle_id = $1
+          AND requester_cm.user_id = $2
       )
     ORDER BY cl.updated_at DESC
     `,
-    [familyId, userId]
+    [circleId, userId]
   );
 
   return rows;
@@ -166,11 +166,11 @@ export async function getDeviceLocation(
         d.user_id = $2
         OR EXISTS (
           SELECT 1
-          FROM family_members fm1
-          INNER JOIN family_members fm2
-            ON fm2.family_id = fm1.family_id
-          WHERE fm1.user_id = d.user_id
-            AND fm2.user_id = $2
+          FROM circle_members cm1
+          INNER JOIN circle_members cm2
+            ON cm2.circle_id = cm1.circle_id
+          WHERE cm1.user_id = d.user_id
+            AND cm2.user_id = $2
         )
       )
     `,
@@ -200,11 +200,11 @@ export async function getDeviceLocationHistory(
         d.user_id = $2
         OR EXISTS (
           SELECT 1
-          FROM family_members fm1
-          INNER JOIN family_members fm2
-            ON fm2.family_id = fm1.family_id
-          WHERE fm1.user_id = d.user_id
-            AND fm2.user_id = $2
+          FROM circle_members cm1
+          INNER JOIN circle_members cm2
+            ON cm2.circle_id = cm1.circle_id
+          WHERE cm1.user_id = d.user_id
+            AND cm2.user_id = $2
         )
       )
     ORDER BY lh.recorded_at DESC
