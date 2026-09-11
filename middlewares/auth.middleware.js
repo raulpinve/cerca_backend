@@ -57,9 +57,6 @@ export async function authenticateToken(req, res, next) {
 
     const dbUser = rows[0];
 
-    // 4. Un solo objeto req.user con TODO lo necesario.
-    //    req.user.id -> UUID interno de Postgres (usar en foreign keys, queries, etc.)
-    //    req.user.firebaseUid -> UID de Firebase (solo si lo necesitas explícitamente)
     req.user = {
       id: dbUser.id,
       firebaseUid: dbUser.firebase_uid,

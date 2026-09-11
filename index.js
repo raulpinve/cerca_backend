@@ -7,7 +7,6 @@ app.use(express.json());
 
 // Rutas 
 import circleRoutes from "./routes/circle.routes.js";
-import userRoutes from './routes/user.routes.js';
 import handleErrorResponse from "./errors/handleErrorResponse.js";
 import circleInvitationRoutes from "./routes/circleInvitation.routes.js";
 import circleMemberRoutes from "./routes/circleMember.routes.js";
@@ -18,7 +17,6 @@ app.use("/circles", circleRoutes);
 app.use("/circle-invitations", circleInvitationRoutes);
 app.use("/circles", circleMemberRoutes);
 app.use("/devices", deviceRoutes);
-app.use("/users", userRoutes);
 app.use("/locations", locationRoutes);
 
 app.use(handleErrorResponse);
