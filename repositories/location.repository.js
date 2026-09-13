@@ -104,15 +104,14 @@ export async function updateMyLocation(
   }
 }
 
-export async function getCircleLocations(
-  circleId,
-  userId
-) {
+export async function getCircleLocations(circleId, userId) {
   const { rows } = await pool.query(
     `
-    SELECT
+    SELECT DISTINCT ON (d.user_id)
       cl.device_id,
       d.user_id,
+      u.first_name,
+      u.last_name,
       d.device_name,
       d.platform,
       d.is_active,
@@ -120,12 +119,29 @@ export async function getCircleLocations(
       cl.latitude,
       cl.longitude,
       cl.accuracy_m,
-      cl.updated_at
+      cl.updated_at,
+      COALESCE(trail.points, '[]'::json) AS recent_trail
     FROM current_locations cl
     INNER JOIN devices d
       ON d.id = cl.device_id
+    INNER JOIN users u
+      ON u.id = d.user_id
     INNER JOIN circle_members cm
       ON cm.user_id = d.user_id
+    LEFT JOIN LATERAL (
+      SELECT json_agg(
+        json_build_object('latitude', h.latitude, 'longitude', h.longitude)
+        ORDER BY h.recorded_at ASC
+      ) AS points
+      FROM (
+        SELECT latitude, longitude, recorded_at
+        FROM location_history
+        WHERE device_id = cl.device_id
+          AND recorded_at >= NOW() - INTERVAL '30 minutes'
+        ORDER BY recorded_at DESC
+        LIMIT 10
+      ) h
+    ) trail ON true
     WHERE cm.circle_id = $1
       AND EXISTS (
         SELECT 1
@@ -133,7 +149,7 @@ export async function getCircleLocations(
         WHERE requester_cm.circle_id = $1
           AND requester_cm.user_id = $2
       )
-    ORDER BY cl.updated_at DESC
+    ORDER BY d.user_id, cl.updated_at DESC
     `,
     [circleId, userId]
   );

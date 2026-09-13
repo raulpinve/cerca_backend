@@ -40,13 +40,29 @@ export async function createCircle(name, userId) {
   }
 }
 
-export async function getCircles() {
+export async function getCircles(userId) {
   const { rows } = await pool.query(
     `
-    SELECT id, name, created_at
-    FROM circles
-    ORDER BY created_at DESC
-    `
+    SELECT
+      c.id,
+      c.name,
+      c.created_at,
+      COUNT(cm2.user_id) AS member_count,
+      ARRAY_AGG(
+        UPPER(LEFT(u2.first_name, 1) || COALESCE(LEFT(u2.last_name, 1), ''))
+        ORDER BY cm2.created_at
+      ) AS member_initials
+    FROM circles c
+    INNER JOIN circle_members cm
+      ON cm.circle_id = c.id AND cm.user_id = $1
+    INNER JOIN circle_members cm2
+      ON cm2.circle_id = c.id
+    INNER JOIN users u2
+      ON u2.id = cm2.user_id
+    GROUP BY c.id, c.name, c.created_at
+    ORDER BY c.name
+    `,
+    [userId]
   );
 
   return rows;

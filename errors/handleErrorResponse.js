@@ -2,8 +2,8 @@ import handleHTTPThrowErrors from "./handleHTTPThrowErrors.js";
 
 const handleErrorResponse = (err, req, res, next) => {
   let errorObject;
-
   console.log(err);
+
 
   if (err.type === "entity.parse.failed") {
     errorObject = handleHTTPThrowErrors.handleBadRequestError(

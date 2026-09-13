@@ -2,10 +2,8 @@ import express from 'express';
 import "dotenv/config";
 const app = express();
 const port = 3000;
-
 app.use(express.json());
 
-// Rutas 
 import circleRoutes from "./routes/circle.routes.js";
 import handleErrorResponse from "./errors/handleErrorResponse.js";
 import circleInvitationRoutes from "./routes/circleInvitation.routes.js";

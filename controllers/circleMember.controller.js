@@ -37,7 +37,8 @@ export async function getMembers(req, res, next) {
 
 export async function removeMember(req, res, next) {
   try {
-    const { circleId, userId } = req.params;
+    const { circleId } = req.params;
+    const userId = req.params.userId?.trim(); 
     const requesterId = req.user.id;
 
     // El owner no puede eliminarse a sí mismo

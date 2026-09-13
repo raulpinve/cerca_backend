@@ -38,7 +38,8 @@ export async function create(req, res, next) {
 
 export async function getAll(req, res, next) {
   try {
-    const circles = await getCircles();
+    const userId = req.user.id; 
+    const circles = await getCircles(userId);
 
     return respuestaExitosa(
       res,
