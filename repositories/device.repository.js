@@ -3,16 +3,25 @@ import { pool } from "../init.db.js";
 export async function createDevice(
   userId,
   deviceName,
-  platform
+  platform,
+  hardwareId
 ) {
   const { rows } = await pool.query(
     `
     INSERT INTO devices (
       user_id,
       device_name,
-      platform
+      platform,
+      hardware_id
     )
-    VALUES ($1, $2, $3)
+    VALUES ($1, $2, $3, $4)
+    ON CONFLICT (user_id, hardware_id)
+    WHERE hardware_id IS NOT NULL
+    DO UPDATE SET
+      device_name = EXCLUDED.device_name,
+      platform = EXCLUDED.platform,
+      is_active = true,
+      last_seen_at = now()
     RETURNING
       id,
       user_id,
@@ -22,11 +31,7 @@ export async function createDevice(
       created_at,
       last_seen_at
     `,
-    [
-      userId,
-      deviceName,
-      platform,
-    ]
+    [userId, deviceName, platform, hardwareId ?? null]
   );
 
   return rows[0];

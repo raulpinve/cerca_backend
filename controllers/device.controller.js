@@ -12,23 +12,17 @@ import { throwNotFoundError } from "../errors/throwHTTPErrors.js";
 
 export async function create(req, res, next) {
   try {
-    const {
-      deviceName,
-      platform,
-    } = req.body;
-
+    const { deviceName, platform, hardwareId } = req.body;
     const userId = req.user.id;
 
     const device = await createDevice(
       userId,
       deviceName,
-      platform
+      platform,
+      hardwareId
     );
 
-    const formattedDevice = camelcaseKeys(
-      device,
-      { deep: true }
-    );
+    const formattedDevice = camelcaseKeys(device, { deep: true });
 
     return respuestaExitosa(
       res,

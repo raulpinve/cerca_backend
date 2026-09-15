@@ -13,7 +13,6 @@ export async function authenticateToken(req, res, next) {
     }
 
     const token = authHeader.split("Bearer ")[1];
-    // const token ="eyJhbGciOiJSUzI1NiIsImtpZCI6IjY2MmQ3YTBkNGVlZmQzNDMyNjFjYWRkZmZhZWM2MjNkYzZjYTlmZjAiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiUmHDumwgVmVsw6FzcXVleiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NJbEh2RHQ3T3JNcm1ZUGtISXhVdFVnd3VNTDl1akpLbk9LWHpIVzBQSDhTSnhfc1JvZz1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9jZXJjYS03Zjk4YyIsImF1ZCI6ImNlcmNhLTdmOThjIiwiYXV0aF90aW1lIjoxNzg5MTY4MTEwLCJ1c2VyX2lkIjoidnJkd25RTVo0cGZIcUNGVHZlUVFmcWp5aUJvMSIsInN1YiI6InZyZHduUU1aNHBmSHFDRlR2ZVFRZnFqeWlCbzEiLCJpYXQiOjE3ODkyNTAzNzIsImV4cCI6MTc4OTI1Mzk3MiwiZW1haWwiOiJyYXVscGludmVAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMTA3MjA0MjczODIxNTU1NTQ0MTEiXSwiZW1haWwiOlsicmF1bHBpbnZlQGdtYWlsLmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6Imdvb2dsZS5jb20ifX0.lAyvyuZzcgmhDmcXG3y_KkYq0yvBvJG-QyUUD2UGN3HIgpsYVKkK2xu1DTKohiRfA5321nYv34pauhwpgYqHC7uJKkMf83IkDl_rSq9ji2_1Aeld38munXG-nB-vWXdJ9EDksNcPdG1aCW_HF_wpW_uKDhwatqH2eaBEP5b_yVqP7nFSLDwvlJwVX6G77TbtO9rs4fMqxDlcYZuIzhAonNfCpX45XfCnVc26DqmAvgirdLuGvLiEG8Ch5och1GYcCdAWrOggy9xT2Oxd1fv1BZ_zreUHVdFr1wXoN31QeO2v6p98haho3d-usepC1E-HFoJL7QSnnu85tmQ43hyPnw"
 
     // 1. Verificar token de Firebase
     const decodedToken = await getAuth(app).verifyIdToken(token);
@@ -22,13 +21,12 @@ export async function authenticateToken(req, res, next) {
     const email = decodedToken.email ?? null;
     const nombreCompleto = decodedToken.name ?? "";
 
-    // 2. Separar nombre y apellidos
+    // 2. Separar nombre y apellidos (solo se usa la primera vez que se crea el usuario)
     const partesNombre = nombreCompleto.trim().split(/\s+/).filter(Boolean);
 
     const firstName = partesNombre.shift() || "Usuario";
     const lastName = partesNombre.join(" ") || null;
 
-    // 3. Crear usuario si no existe; si ya existe, lo actualiza y devuelve
     const { rows } = await pool.query(
       `
       INSERT INTO users (
@@ -41,8 +39,6 @@ export async function authenticateToken(req, res, next) {
 
       ON CONFLICT (firebase_uid)
       DO UPDATE SET
-        first_name = EXCLUDED.first_name,
-        last_name = EXCLUDED.last_name,
         email = EXCLUDED.email
 
       RETURNING

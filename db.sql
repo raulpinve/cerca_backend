@@ -186,3 +186,12 @@ CREATE INDEX idx_location_history_device_id
 
 CREATE INDEX idx_location_history_recorded_at
     ON location_history(recorded_at);
+
+
+ALTER TABLE devices ADD COLUMN hardware_id TEXT;
+
+-- Único por usuario: el mismo hardware puede reaparecer para otro
+-- usuario (venta de teléfono usado, cuenta compartida) sin chocar.
+CREATE UNIQUE INDEX devices_user_hardware_unique
+  ON devices (user_id, hardware_id)
+  WHERE hardware_id IS NOT NULL;

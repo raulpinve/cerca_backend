@@ -47,7 +47,8 @@ export async function getCircles(userId) {
       c.id,
       c.name,
       c.created_at,
-      COUNT(cm2.user_id) AS member_count,
+      cm.role,
+      COUNT(cm2.user_id)::int AS member_count,
       ARRAY_AGG(
         UPPER(LEFT(u2.first_name, 1) || COALESCE(LEFT(u2.last_name, 1), ''))
         ORDER BY cm2.created_at
@@ -59,7 +60,7 @@ export async function getCircles(userId) {
       ON cm2.circle_id = c.id
     INNER JOIN users u2
       ON u2.id = cm2.user_id
-    GROUP BY c.id, c.name, c.created_at
+    GROUP BY c.id, c.name, c.created_at, cm.role
     ORDER BY c.name
     `,
     [userId]
