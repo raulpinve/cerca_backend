@@ -3,8 +3,8 @@ import camelcaseKeys from "camelcase-keys";
 import {
   updateMyLocation as updateMyLocationRepository,
   getCircleLocations as getCircleLocationsRepository,
-  getDeviceLocation as getDeviceLocationRepository,
-  getDeviceLocationHistory as getDeviceLocationHistoryRepository,
+  getUserLocation as getUserLocationRepository,
+  getUserLocationHistory as getUserLocationHistoryRepository,
 } from "../repositories/location.repository.js";
 
 import { respuestaExitosa } from "../utils/response.utils.js";
@@ -14,7 +14,6 @@ import { throwNotFoundError } from "../errors/throwHTTPErrors.js";
 export async function updateMyLocation(req, res, next) {
   try {
     const {
-      deviceId,
       latitude,
       longitude,
       accuracyM,
@@ -23,7 +22,6 @@ export async function updateMyLocation(req, res, next) {
     const userId = req.user.id;
 
     const location = await updateMyLocationRepository(
-        deviceId,
         userId,
         latitude,
         longitude,
@@ -32,7 +30,7 @@ export async function updateMyLocation(req, res, next) {
 
     if (!location) {
       throwNotFoundError(
-        "El dispositivo no existe o no pertenece al usuario"
+        "No se pudo actualizar la ubicación del usuario"
       );
     }
 
@@ -79,14 +77,14 @@ export async function getCircleLocations(req, res, next) {
   }
 }
 
-export async function getDeviceLocation(req, res, next) {
+export async function getUserLocation(req, res, next) {
   try {
-    const { deviceId } = req.params;
+    const { userId: targetUserId } = req.params;
     const userId = req.user.id;
 
     const location =
-      await getDeviceLocationRepository(
-        deviceId,
+      await getUserLocationRepository(
+        targetUserId,
         userId
       );
 
@@ -112,19 +110,19 @@ export async function getDeviceLocation(req, res, next) {
   }
 }
 
-export async function getDeviceLocationHistory(
+export async function getUserLocationHistory(
   req,
   res,
   next
 ) {
   try {
-    const { deviceId } = req.params;
+    const { userId: targetUserId } = req.params;
     const userId = req.user.id;
     const limit = Number(req.query.limit) || 20;
 
     const locations =
-      await getDeviceLocationHistoryRepository(
-        deviceId,
+      await getUserLocationHistoryRepository(
+        targetUserId,
         userId,
         limit
       );

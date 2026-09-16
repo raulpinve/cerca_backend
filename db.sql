@@ -8,26 +8,40 @@ CREATE DATABASE cerca;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 
+-- =========================================================
 -- USERS
+-- =========================================================
+
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
     firebase_uid VARCHAR(128) UNIQUE NOT NULL,
+
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     email VARCHAR(255),
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 
+-- =========================================================
 -- CIRCLES
+-- =========================================================
+
 CREATE TABLE circles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
     name VARCHAR(100) NOT NULL,
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 
+-- =========================================================
 -- CIRCLE MEMBERS
+-- =========================================================
+
 CREATE TABLE circle_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
@@ -55,7 +69,10 @@ ON circle_members (circle_id)
 WHERE role = 'owner';
 
 
+-- =========================================================
 -- CIRCLE INVITATIONS
+-- =========================================================
+
 CREATE TABLE circle_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
@@ -94,63 +111,60 @@ CREATE TABLE circle_invitations (
         )
 );
 
+
 CREATE UNIQUE INDEX unique_pending_circle_invitation
 ON circle_invitations (circle_id, invited_user_id)
 WHERE status = 'pending';
 
--- DEVICES
-CREATE TABLE devices (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    user_id UUID NOT NULL
+-- =========================================================
+-- CURRENT LOCATIONS
+-- Una única ubicación actual por usuario
+-- =========================================================
+
+CREATE TABLE current_locations (
+    user_id UUID PRIMARY KEY
         REFERENCES users(id)
         ON DELETE CASCADE,
 
-    device_name VARCHAR(100),
-    platform VARCHAR(20),
-
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    last_seen_at TIMESTAMPTZ
-);
-
-
--- CURRENT LOCATIONS
-CREATE TABLE current_locations (
-    device_id UUID PRIMARY KEY
-        REFERENCES devices(id)
-        ON DELETE CASCADE,
-
     latitude DOUBLE PRECISION NOT NULL,
+
     longitude DOUBLE PRECISION NOT NULL,
+
     accuracy_m DOUBLE PRECISION,
 
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT latitude_range
+    CONSTRAINT current_locations_latitude_range
         CHECK (latitude BETWEEN -90 AND 90),
 
-    CONSTRAINT longitude_range
+    CONSTRAINT current_locations_longitude_range
         CHECK (longitude BETWEEN -180 AND 180),
 
-    CONSTRAINT accuracy_positive
+    CONSTRAINT current_locations_accuracy_positive
         CHECK (
             accuracy_m IS NULL
             OR accuracy_m >= 0
         )
 );
 
+
+-- =========================================================
 -- LOCATION HISTORY
+-- Historial de ubicaciones por usuario
+-- =========================================================
+
 CREATE TABLE location_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    device_id UUID NOT NULL
-        REFERENCES devices(id)
+    user_id UUID NOT NULL
+        REFERENCES users(id)
         ON DELETE CASCADE,
 
     latitude DOUBLE PRECISION NOT NULL,
+
     longitude DOUBLE PRECISION NOT NULL,
+
     accuracy_m DOUBLE PRECISION,
 
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -168,30 +182,19 @@ CREATE TABLE location_history (
         )
 );
 
+
+-- =========================================================
 -- ÍNDICES
+-- =========================================================
+
 CREATE INDEX idx_circle_members_user_id
     ON circle_members(user_id);
-
-CREATE INDEX idx_devices_user_id
-    ON devices(user_id);
-
-CREATE INDEX idx_devices_active
-    ON devices(is_active);
 
 CREATE INDEX idx_current_locations_updated_at
     ON current_locations(updated_at);
 
-CREATE INDEX idx_location_history_device_id
-    ON location_history(device_id);
+CREATE INDEX idx_location_history_user_id
+    ON location_history(user_id);
 
 CREATE INDEX idx_location_history_recorded_at
     ON location_history(recorded_at);
-
-
-ALTER TABLE devices ADD COLUMN hardware_id TEXT;
-
--- Único por usuario: el mismo hardware puede reaparecer para otro
--- usuario (venta de teléfono usado, cuenta compartida) sin chocar.
-CREATE UNIQUE INDEX devices_user_hardware_unique
-  ON devices (user_id, hardware_id)
-  WHERE hardware_id IS NOT NULL;

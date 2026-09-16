@@ -3,14 +3,14 @@ import { Router } from "express";
 import {
   updateMyLocation,
   getCircleLocations,
-  getDeviceLocation,
-  getDeviceLocationHistory,
+  getUserLocation,
+  getUserLocationHistory,
 } from "../controllers/location.controller.js";
 
 import {
   updateLocationValidator,
   circleIdValidator,
-  deviceIdValidator,
+  userIdValidator,
   locationHistoryValidator,
 } from "../validators/location.validators.js";
 
@@ -37,17 +37,17 @@ router.get(
 );
 
 router.get(
-  "/devices/:deviceId",
-  deviceIdValidator,
+  "/users/:userId",
+  userIdValidator,
   handleValidationErrors,
-  getDeviceLocation
+  getUserLocation
 );
 
 router.get(
-  "/devices/:deviceId/history",
+  "/users/:userId/history",
   locationHistoryValidator,
   handleValidationErrors,
-  getDeviceLocationHistory
+  getUserLocationHistory
 );
 
 export default router;

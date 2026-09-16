@@ -1,10 +1,6 @@
 import { body, param, query } from "express-validator";
 
 export const updateLocationValidator = [
-  body("deviceId")
-    .isUUID()
-    .withMessage("El ID del dispositivo no es válido"),
-
   body("latitude")
     .isFloat({ min: -90, max: 90 })
     .withMessage("La latitud debe ser un número entre -90 y 90"),
@@ -25,14 +21,14 @@ export const circleIdValidator = [
     .withMessage("El ID del círculo no es válido"),
 ];
 
-export const deviceIdValidator = [
-  param("deviceId")
+export const userIdValidator = [
+  param("userId")
     .isUUID()
-    .withMessage("El ID del dispositivo no es válido"),
+    .withMessage("El ID del usuario no es válido"),
 ];
 
 export const locationHistoryValidator = [
-  ...deviceIdValidator,
+  ...userIdValidator,
 
   query("limit")
     .optional()

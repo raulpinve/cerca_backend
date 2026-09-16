@@ -2,7 +2,6 @@ import { pool } from "../init.db.js";
 import { emitLocationUpdate } from "../src/sockets/socketServer.js";
 
 export async function updateMyLocation(
-  deviceId,
   userId,
   latitude,
   longitude,
@@ -16,45 +15,32 @@ export async function updateMyLocation(
     // 1. Guardar ubicación en historial
     const { rows: historyRows } = await client.query(
       `
-      INSERT INTO location_history (device_id, latitude, longitude, accuracy_m)
-      SELECT d.id, $3, $4, $5
-      FROM devices d
-      WHERE d.id = $1 AND d.user_id = $2
-      RETURNING id, device_id, latitude, longitude, accuracy_m, recorded_at
+      INSERT INTO location_history (user_id, latitude, longitude, accuracy_m)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, user_id, latitude, longitude, accuracy_m, recorded_at
       `,
-      [deviceId, userId, latitude, longitude, accuracyM]
+      [userId, latitude, longitude, accuracyM]
     );
-
-    if (historyRows.length === 0) {
-      await client.query("ROLLBACK");
-      return null;
-    }
 
     // 2. Actualizar ubicación actual
     const { rows } = await client.query(
       `
-      INSERT INTO current_locations (device_id, latitude, longitude, accuracy_m)
+      INSERT INTO current_locations (user_id, latitude, longitude, accuracy_m)
       VALUES ($1, $2, $3, $4)
-      ON CONFLICT (device_id)
+      ON CONFLICT (user_id)
       DO UPDATE SET
         latitude = EXCLUDED.latitude,
         longitude = EXCLUDED.longitude,
         accuracy_m = EXCLUDED.accuracy_m,
         updated_at = NOW()
-      RETURNING device_id, latitude, longitude, accuracy_m, updated_at
+      RETURNING user_id, latitude, longitude, accuracy_m, updated_at
       `,
-      [deviceId, latitude, longitude, accuracyM]
-    );
-
-    // 3. Actualizar última conexión del dispositivo
-    await client.query(
-      `UPDATE devices SET last_seen_at = NOW() WHERE id = $1 AND user_id = $2`,
-      [deviceId, userId]
+      [userId, latitude, longitude, accuracyM]
     );
 
     await client.query("COMMIT");
 
-    // 4. NUEVO: emite el update por socket a todos los círculos del usuario
+    // 3. Emite el update por socket a todos los círculos del usuario
     const { rows: circleRows } = await pool.query(
       `SELECT circle_id FROM circle_members WHERE user_id = $1`,
       [userId]
@@ -62,7 +48,6 @@ export async function updateMyLocation(
 
     for (const { circle_id } of circleRows) {
       emitLocationUpdate(circle_id, {
-        deviceId,
         userId,
         latitude,
         longitude,
@@ -83,9 +68,8 @@ export async function updateMyLocation(
 export async function getCircleLocations(circleId, userId) {
   const { rows } = await pool.query(
     `
-    SELECT DISTINCT ON (d.user_id)
-      cl.device_id,
-      d.user_id,
+    SELECT
+      cl.user_id,
       u.first_name,
       u.last_name,
 
@@ -99,10 +83,6 @@ export async function getCircleLocations(circleId, userId) {
         END
       ) AS member_initials,
 
-      d.device_name,
-      d.platform,
-      d.is_active,
-      d.last_seen_at,
       cl.latitude,
       cl.longitude,
       cl.accuracy_m,
@@ -112,14 +92,11 @@ export async function getCircleLocations(circleId, userId) {
 
     FROM current_locations cl
 
-    INNER JOIN devices d
-      ON d.id = cl.device_id
-
     INNER JOIN users u
-      ON u.id = d.user_id
+      ON u.id = cl.user_id
 
     INNER JOIN circle_members cm
-      ON cm.user_id = d.user_id
+      ON cm.user_id = cl.user_id
 
     LEFT JOIN LATERAL (
       SELECT json_agg(
@@ -135,7 +112,7 @@ export async function getCircleLocations(circleId, userId) {
           longitude,
           recorded_at
         FROM location_history
-        WHERE device_id = cl.device_id
+        WHERE user_id = cl.user_id
           AND recorded_at >= NOW() - INTERVAL '30 minutes'
         ORDER BY recorded_at DESC
         LIMIT 10
@@ -150,7 +127,7 @@ export async function getCircleLocations(circleId, userId) {
           AND requester_cm.user_id = $2
       )
 
-    ORDER BY d.user_id, cl.updated_at DESC
+    ORDER BY cl.updated_at DESC
     `,
     [circleId, userId]
   );
@@ -158,47 +135,40 @@ export async function getCircleLocations(circleId, userId) {
   return rows;
 }
 
-export async function getDeviceLocation(
-  deviceId,
+export async function getUserLocation(
+  targetUserId,
   userId
 ) {
   const { rows } = await pool.query(
     `
     SELECT
-      cl.device_id,
-      d.user_id,
-      d.device_name,
-      d.platform,
-      d.is_active,
-      d.last_seen_at,
+      cl.user_id,
       cl.latitude,
       cl.longitude,
       cl.accuracy_m,
       cl.updated_at
     FROM current_locations cl
-    INNER JOIN devices d
-      ON d.id = cl.device_id
-    WHERE cl.device_id = $1
+    WHERE cl.user_id = $1
       AND (
-        d.user_id = $2
+        cl.user_id = $2
         OR EXISTS (
           SELECT 1
           FROM circle_members cm1
           INNER JOIN circle_members cm2
             ON cm2.circle_id = cm1.circle_id
-          WHERE cm1.user_id = d.user_id
+          WHERE cm1.user_id = cl.user_id
             AND cm2.user_id = $2
         )
       )
     `,
-    [deviceId, userId]
+    [targetUserId, userId]
   );
 
   return rows[0];
 }
 
-export async function getDeviceLocationHistory(
-  deviceId,
+export async function getUserLocationHistory(
+  targetUserId,
   userId,
   limit
 ) {
@@ -210,24 +180,22 @@ export async function getDeviceLocationHistory(
       lh.accuracy_m,
       lh.recorded_at
     FROM location_history lh
-    INNER JOIN devices d
-      ON d.id = lh.device_id
-    WHERE lh.device_id = $1
+    WHERE lh.user_id = $1
       AND (
-        d.user_id = $2
+        lh.user_id = $2
         OR EXISTS (
           SELECT 1
           FROM circle_members cm1
           INNER JOIN circle_members cm2
             ON cm2.circle_id = cm1.circle_id
-          WHERE cm1.user_id = d.user_id
+          WHERE cm1.user_id = lh.user_id
             AND cm2.user_id = $2
         )
       )
     ORDER BY lh.recorded_at DESC
     LIMIT $3
     `,
-    [deviceId, userId, limit]
+    [targetUserId, userId, limit]
   );
 
   return rows;
