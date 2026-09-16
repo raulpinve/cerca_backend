@@ -50,7 +50,15 @@ export async function getCircles(userId) {
       cm.role,
       COUNT(cm2.user_id)::int AS member_count,
       ARRAY_AGG(
-        UPPER(LEFT(u2.first_name, 1) || COALESCE(LEFT(u2.last_name, 1), ''))
+        UPPER(
+          CASE
+            WHEN u2.first_name IS NOT NULL OR u2.last_name IS NOT NULL THEN
+              LEFT(COALESCE(u2.first_name, ''), 1) ||
+              LEFT(COALESCE(u2.last_name, ''), 1)
+            ELSE
+              LEFT(u2.email, 2)
+          END
+        )
         ORDER BY cm2.created_at
       ) AS member_initials
     FROM circles c

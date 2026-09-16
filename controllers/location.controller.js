@@ -22,8 +22,7 @@ export async function updateMyLocation(req, res, next) {
 
     const userId = req.user.id;
 
-    const location =
-      await updateMyLocationRepository(
+    const location = await updateMyLocationRepository(
         deviceId,
         userId,
         latitude,

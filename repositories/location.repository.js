@@ -1,4 +1,5 @@
 import { pool } from "../init.db.js";
+import { emitLocationUpdate } from "../src/sockets/socketServer.js";
 
 export async function updateMyLocation(
   deviceId,
@@ -15,35 +16,13 @@ export async function updateMyLocation(
     // 1. Guardar ubicación en historial
     const { rows: historyRows } = await client.query(
       `
-      INSERT INTO location_history (
-        device_id,
-        latitude,
-        longitude,
-        accuracy_m
-      )
-      SELECT
-        d.id,
-        $3,
-        $4,
-        $5
+      INSERT INTO location_history (device_id, latitude, longitude, accuracy_m)
+      SELECT d.id, $3, $4, $5
       FROM devices d
-      WHERE d.id = $1
-        AND d.user_id = $2
-      RETURNING
-        id,
-        device_id,
-        latitude,
-        longitude,
-        accuracy_m,
-        recorded_at
+      WHERE d.id = $1 AND d.user_id = $2
+      RETURNING id, device_id, latitude, longitude, accuracy_m, recorded_at
       `,
-      [
-        deviceId,
-        userId,
-        latitude,
-        longitude,
-        accuracyM,
-      ]
+      [deviceId, userId, latitude, longitude, accuracyM]
     );
 
     if (historyRows.length === 0) {
@@ -54,12 +33,7 @@ export async function updateMyLocation(
     // 2. Actualizar ubicación actual
     const { rows } = await client.query(
       `
-      INSERT INTO current_locations (
-        device_id,
-        latitude,
-        longitude,
-        accuracy_m
-      )
+      INSERT INTO current_locations (device_id, latitude, longitude, accuracy_m)
       VALUES ($1, $2, $3, $4)
       ON CONFLICT (device_id)
       DO UPDATE SET
@@ -67,33 +41,35 @@ export async function updateMyLocation(
         longitude = EXCLUDED.longitude,
         accuracy_m = EXCLUDED.accuracy_m,
         updated_at = NOW()
-      RETURNING
-        device_id,
-        latitude,
-        longitude,
-        accuracy_m,
-        updated_at
+      RETURNING device_id, latitude, longitude, accuracy_m, updated_at
       `,
-      [
-        deviceId,
-        latitude,
-        longitude,
-        accuracyM,
-      ]
+      [deviceId, latitude, longitude, accuracyM]
     );
 
     // 3. Actualizar última conexión del dispositivo
     await client.query(
-      `
-      UPDATE devices
-      SET last_seen_at = NOW()
-      WHERE id = $1
-        AND user_id = $2
-      `,
+      `UPDATE devices SET last_seen_at = NOW() WHERE id = $1 AND user_id = $2`,
       [deviceId, userId]
     );
 
     await client.query("COMMIT");
+
+    // 4. NUEVO: emite el update por socket a todos los círculos del usuario
+    const { rows: circleRows } = await pool.query(
+      `SELECT circle_id FROM circle_members WHERE user_id = $1`,
+      [userId]
+    );
+
+    for (const { circle_id } of circleRows) {
+      emitLocationUpdate(circle_id, {
+        deviceId,
+        userId,
+        latitude,
+        longitude,
+        accuracyM,
+        updatedAt: rows[0].updated_at,
+      });
+    }
 
     return rows[0];
   } catch (error) {
@@ -112,6 +88,17 @@ export async function getCircleLocations(circleId, userId) {
       d.user_id,
       u.first_name,
       u.last_name,
+
+      UPPER(
+        CASE
+          WHEN u.first_name IS NOT NULL OR u.last_name IS NOT NULL THEN
+            LEFT(COALESCE(u.first_name, ''), 1) ||
+            LEFT(COALESCE(u.last_name, ''), 1)
+          ELSE
+            LEFT(u.email, 2)
+        END
+      ) AS member_initials,
+
       d.device_name,
       d.platform,
       d.is_active,
@@ -120,21 +107,33 @@ export async function getCircleLocations(circleId, userId) {
       cl.longitude,
       cl.accuracy_m,
       cl.updated_at,
+
       COALESCE(trail.points, '[]'::json) AS recent_trail
+
     FROM current_locations cl
+
     INNER JOIN devices d
       ON d.id = cl.device_id
+
     INNER JOIN users u
       ON u.id = d.user_id
+
     INNER JOIN circle_members cm
       ON cm.user_id = d.user_id
+
     LEFT JOIN LATERAL (
       SELECT json_agg(
-        json_build_object('latitude', h.latitude, 'longitude', h.longitude)
+        json_build_object(
+          'latitude', h.latitude,
+          'longitude', h.longitude
+        )
         ORDER BY h.recorded_at ASC
       ) AS points
       FROM (
-        SELECT latitude, longitude, recorded_at
+        SELECT
+          latitude,
+          longitude,
+          recorded_at
         FROM location_history
         WHERE device_id = cl.device_id
           AND recorded_at >= NOW() - INTERVAL '30 minutes'
@@ -142,6 +141,7 @@ export async function getCircleLocations(circleId, userId) {
         LIMIT 10
       ) h
     ) trail ON true
+
     WHERE cm.circle_id = $1
       AND EXISTS (
         SELECT 1
@@ -149,6 +149,7 @@ export async function getCircleLocations(circleId, userId) {
         WHERE requester_cm.circle_id = $1
           AND requester_cm.user_id = $2
       )
+
     ORDER BY d.user_id, cl.updated_at DESC
     `,
     [circleId, userId]

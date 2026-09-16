@@ -24,7 +24,7 @@ export async function authenticateToken(req, res, next) {
     // 2. Separar nombre y apellidos (solo se usa la primera vez que se crea el usuario)
     const partesNombre = nombreCompleto.trim().split(/\s+/).filter(Boolean);
 
-    const firstName = partesNombre.shift() || "Usuario";
+    const firstName = partesNombre.shift() || null;
     const lastName = partesNombre.join(" ") || null;
 
     const { rows } = await pool.query(
