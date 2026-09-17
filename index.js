@@ -4,9 +4,8 @@ import http from "http";
 import { initSocketServer } from './src/sockets/socketServer.js';
 
 const app = express();
-const port = 3000;
 app.use(express.json());
-
+const port = process.env.PORT;
 const httpServer = http.createServer(app);
 initSocketServer(httpServer);
 
